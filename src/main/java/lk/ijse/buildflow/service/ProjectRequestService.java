@@ -1,23 +1,16 @@
 package lk.ijse.buildflow.service;
 
-import lk.ijse.buildflow.entity.ProjectRequest;
-import lk.ijse.buildflow.repository.ProjectRequestRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import lk.ijse.buildflow.dto.ProjectRequestDTO;
 
-@Service
-public class ProjectRequestService {
-    @Autowired
-    private ProjectRequestRepository requestRepository;
+import java.util.List;
 
-    @Autowired
-    private EmailService emailService;
+public interface ProjectRequestService {
+    // Client කෙනෙක් අලුත් Request එකක් (Quotation/Edit Plan) දැමීම
+    ProjectRequestDTO createRequest(ProjectRequestDTO requestDTO);
 
-    public ProjectRequest createRequest(ProjectRequest request) {
-        ProjectRequest saved = requestRepository.save(request);
-        // Automated Email Notification
-        emailService.sendSimpleEmail(saved.getClient().getEmail(),
-                "Request Received", "Your request for " + request.getRequestType() + " is pending.");
-        return saved;
-    }
+    // පද්ධතියේ ඇති සියලුම Requests බැලීමට (Admin සඳහා)
+    List<ProjectRequestDTO> getAllRequests();
+
+    // Request එකක් Approve කර Project එකක් ආරම්භ කිරීම
+    void approveRequest(Long requestId, Long contractorId);
 }
