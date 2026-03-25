@@ -14,4 +14,10 @@ public interface HouseModelRepository extends JpaRepository<HouseModel, Long> {
 
     // Floor area එක අනුව සෙවීමට
     List<HouseModel> findByFloorAreaGreaterThanEqual(Double area);
+
+    // නම අනුව search කිරීම (Case-insensitive)
+    List<HouseModel> findByModelNameContainingIgnoreCase(String name);
+
+    // මිල පරාසයක් (Price Range) අනුව filter කිරීම
+    List<HouseModel> findByEstimatedCostBetween(double minPrice, double maxPrice);
 }

@@ -11,4 +11,5 @@ public class HouseModelDTO {
     private Double floorArea;
     private Integer numBedrooms;
     private String modelUrl;
+    private String imgUrl;
 }

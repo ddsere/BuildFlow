@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/models")
+@CrossOrigin
 public class HouseModelController {
     @Autowired
     private HouseModelService houseModelService;
@@ -23,11 +24,12 @@ public class HouseModelController {
 
     @GetMapping("/search")
     public ResponseEntity<APIResponse<List<HouseModelDTO>>> searchModels(
+            @RequestParam(required = false) String name,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) Integer minBedrooms,
             @RequestParam(required = false) Double minArea) {
 
-        List<HouseModelDTO> results = houseModelService.searchModels(maxPrice, minBedrooms, minArea);
+        List<HouseModelDTO> results = houseModelService.searchModels(name, maxPrice, minBedrooms, minArea);
         return ResponseEntity.ok(new APIResponse<>(200, "Search completed", results));
     }
 

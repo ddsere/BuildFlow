@@ -15,6 +15,7 @@ public class HouseModel {
     private double estimatedCost;
     private double floorArea;
     private int numBedrooms;
+    private String modelUrl;
     private String imgUrl;
 
 }
