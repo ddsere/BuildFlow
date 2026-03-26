@@ -18,9 +18,7 @@ public class ConstructionProjectServiceImpl implements ConstructionProjectServic
 
     @Override
     public ConstructionProjectDTO startProject(ProjectRequestDTO requestDTO) {
-        // Business logic to convert a request into a project
         ConstructionProject project = new ConstructionProject();
-        // Mapping logic can be manual or using modelMapper
         ConstructionProject saved = projectRepository.save(project);
         return modelMapper.map(saved, ConstructionProjectDTO.class);
     }

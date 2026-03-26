@@ -25,7 +25,7 @@ public class HouseModelServiceImpl implements HouseModelService {
 
     @Override
     public List<HouseModelDTO> searchModels(String name, Double maxPrice, Integer minBedrooms, Double minArea) {
-        // Database එකෙන් සියලුම දත්ත ගෙන Java Streams මගින් filter කිරීම
+
         return modelRepository.findAll().stream()
                 .filter(m -> (name == null || name.isBlank() ||
                         m.getModelName().toLowerCase().contains(name.toLowerCase())))

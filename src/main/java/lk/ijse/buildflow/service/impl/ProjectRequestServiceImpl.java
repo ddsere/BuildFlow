@@ -3,9 +3,11 @@ package lk.ijse.buildflow.service.impl;
 import jakarta.transaction.Transactional;
 import lk.ijse.buildflow.dto.ProjectRequestDTO;
 import lk.ijse.buildflow.entity.ConstructionProject;
+import lk.ijse.buildflow.entity.HouseModel;
 import lk.ijse.buildflow.entity.ProjectRequest;
 import lk.ijse.buildflow.entity.User;
 import lk.ijse.buildflow.repository.ConstructionProjectRepository;
+import lk.ijse.buildflow.repository.HouseModelRepository;
 import lk.ijse.buildflow.repository.ProjectRequestRepository;
 import lk.ijse.buildflow.repository.UserRepository;
 import lk.ijse.buildflow.service.EmailService;
@@ -25,13 +27,25 @@ public class ProjectRequestServiceImpl implements ProjectRequestService {
     @Autowired private UserRepository userRepository;
     @Autowired private EmailService emailService;
     @Autowired private ModelMapper modelMapper;
+    @Autowired private HouseModelRepository houseModelRepository;
 
     @Override
     public ProjectRequestDTO createRequest(ProjectRequestDTO requestDTO) {
+
         ProjectRequest request = modelMapper.map(requestDTO, ProjectRequest.class);
+
+        User client = userRepository.findById(requestDTO.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        request.setClient(client);
+
+        HouseModel model = houseModelRepository.findById(requestDTO.getModelId())
+                .orElseThrow(() -> new RuntimeException("House Model not found"));
+        request.setHouseModel(model);
+
+        request.setStatus("PENDING");
+
         ProjectRequest saved = requestRepository.save(request);
 
-        // Automated Email notification
         emailService.sendSimpleEmail(saved.getClient().getEmail(),
                 "BuildFlow - Request Received",
                 "We have received your " + saved.getRequestType() + " request for the model: " + saved.getHouseModel().getModelName());
@@ -47,15 +61,14 @@ public class ProjectRequestServiceImpl implements ProjectRequestService {
     }
 
     @Override
-    @Transactional // මෙහිදී Tables දෙකක වැඩ සිදුවන බැවින් මෙය අනිවාර්ය වේ
+    @Transactional
     public void approveRequest(Long requestId, Long contractorId) {
-        // 1. Request එක සොයාගෙන එහි Status එක Update කිරීම
+
         ProjectRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
         request.setStatus("APPROVED");
         requestRepository.save(request);
 
-        // 2. Contractor කෙනෙකුව සොයාගෙන නව Project එකක් නිර්මාණය කිරීම
         User contractor = userRepository.findById(contractorId)
                 .orElseThrow(() -> new RuntimeException("Contractor not found"));
 
@@ -67,7 +80,6 @@ public class ProjectRequestServiceImpl implements ProjectRequestService {
 
         projectRepository.save(project);
 
-        // 3. දෙපාර්ශවයටම Email යැවීම
         emailService.sendSimpleEmail(request.getClient().getEmail(),
                 "Project Approved!", "Congratulations! Your house construction project has been approved and started.");
 

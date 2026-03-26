@@ -19,6 +19,6 @@ public class Payment {
 
     private Double amount;
     private String transactionId;
-    private String paymentStatus; // SUCCESS, PENDING
+    private String paymentStatus;
     private LocalDateTime paymentDate = LocalDateTime.now();
 }

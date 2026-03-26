@@ -12,11 +12,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Testing වලදී මේක disable කරන්න ඕනේ
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/user/**").permitAll() // User register වෙන්න ඉඩ දෙන්න
-                        .requestMatchers("/api/v1/models/**").permitAll() // Models බලන්න ඉඩ දෙන්න
-                        .anyRequest().authenticated() // අනෙක් ඒවාට security ඕනේ
+                        .requestMatchers("/api/v1/user/**").permitAll()
+                        .requestMatchers("/api/v1/models/**").permitAll()
+                        .requestMatchers("/api/v1/inquiries/**").permitAll()
+                        .requestMatchers("/api/v1/orders/**").permitAll()
+                        .requestMatchers("/api/v1/progress/**").permitAll()
+                        .anyRequest().authenticated()
                 );
         return http.build();
     }
