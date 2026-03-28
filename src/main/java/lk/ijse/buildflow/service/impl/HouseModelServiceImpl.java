@@ -42,4 +42,22 @@ public class HouseModelServiceImpl implements HouseModelService {
         HouseModel savedModel = modelRepository.save(model);
         return modelMapper.map(savedModel, HouseModelDTO.class);
     }
+
+    @Override
+    public HouseModelDTO getHouseModelById(Long modelId) {
+        // Database එකෙන් Entity එක හොයනවා
+        HouseModel houseModel = modelRepository.findById(modelId)
+                .orElseThrow(() -> new RuntimeException("House Model not found with ID: " + modelId));
+
+        // Entity එක DTO එකකට හරවනවා (Manual mapping)
+        HouseModelDTO dto = new HouseModelDTO();
+        dto.setModelId(houseModel.getModelId());
+        dto.setModelName(houseModel.getModelName());
+        dto.setDescription(houseModel.getDescription());
+        dto.setEstimatedCost(houseModel.getEstimatedCost());
+        dto.setFloorArea(houseModel.getFloorArea());
+        dto.setNumBedrooms(houseModel.getNumBedrooms());
+
+        return dto;
+    }
 }

@@ -40,13 +40,6 @@ public class InquiryController {
             message.setText(emailContent);
             mailSender.send(message);
 
-            SimpleMailMessage replyMessage = new SimpleMailMessage();
-            replyMessage.setFrom("ඔයාගේ_gmail_ලිපිනය@gmail.com");
-            replyMessage.setTo(inquiryDTO.getCustomerEmail());
-            replyMessage.setSubject("Thank you for contacting BuildFlow!");
-            replyMessage.setText("Hi " + inquiryDTO.getCustomerName() + ",\n\nWe received your request for " + inquiryDTO.getModelName() + ". Our team will contact you shortly.");
-            mailSender.send(replyMessage);
-
             return ResponseEntity.ok(new APIResponse<>(200, "Email sent successfully!", "Success"));
 
         } catch (Exception e) {

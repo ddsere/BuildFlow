@@ -13,7 +13,7 @@ import java.time.LocalDate;
 public class OpenPdfGeneratorImpl implements DocumentGenerator {
 
     @Override
-    public byte[] generateQuotationPdf(String customerName, String modelName, Double price) {
+    public byte[] generateQuotationPdf(String customerName, String modelName, Double price, Integer bedrooms, Double area) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document document = new Document(PageSize.A4);
 
@@ -34,11 +34,14 @@ public class OpenPdfGeneratorImpl implements DocumentGenerator {
 
             PdfPTable table = new PdfPTable(2);
             table.setWidthPercentage(100);
-            table.addCell("Description");
-            table.addCell("Details");
-
             table.addCell("House Model Name");
             table.addCell(modelName);
+
+            table.addCell("Number of Bedrooms");
+            table.addCell(String.valueOf(bedrooms));
+
+            table.addCell("Floor Area");
+            table.addCell(area + " sq.ft");
 
             table.addCell("Estimated Total Cost");
             table.addCell("LKR " + String.format("%.2f", price));

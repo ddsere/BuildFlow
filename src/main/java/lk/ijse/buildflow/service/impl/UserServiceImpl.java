@@ -13,16 +13,28 @@ public class UserServiceImpl implements UserService {
     @Autowired private UserRepository userRepository;
     @Autowired private ModelMapper modelMapper;
 
+    // SecurityConfig එකේ අපි හදපු Bean එක මෙතනට ගන්නවා
+    @Autowired private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @Override
     public UserDTO registerUser(UserDTO userDTO) {
+        // 1. DTO එක Entity එකට හරවනවා
         User user = modelMapper.map(userDTO, User.class);
+
+        // 2. Password එක Encrypt කරලා ආපහු set කරනවා
+        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+
+        // 3. දැන් Encrypt වුණු password එකත් එක්ක Save කරනවා
         User savedUser = userRepository.save(user);
+
         return modelMapper.map(savedUser, UserDTO.class);
     }
 
     @Override
     public UserDTO getUserByUsername(String username) {
-        User user = userRepository.findByUserName(username).orElseThrow();
+        // මෙතන ඔයාගේ Repository එකේ findByEmail ද findByUserName ද තියෙන්නේ කියලා බලන්න
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         return modelMapper.map(user, UserDTO.class);
     }
 }

@@ -10,4 +10,7 @@ public interface HouseModelService {
     List<HouseModelDTO> searchModels(String name, Double maxPrice, Integer minBedrooms, Double minArea);
 
     HouseModelDTO saveModel(HouseModelDTO houseModelDTO);
+
+    HouseModelDTO getHouseModelById(Long modelId);
+
 }
