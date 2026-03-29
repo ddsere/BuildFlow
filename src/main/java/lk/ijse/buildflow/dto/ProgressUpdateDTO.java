@@ -1,7 +1,6 @@
 package lk.ijse.buildflow.dto;
 
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
 @Data
@@ -10,5 +9,5 @@ public class ProgressUpdateDTO {
     private Integer percentageComplete;
     private String description;
     private String photoUrl;
-    private LocalDateTime updateTime;
+    private LocalDateTime updateTime; // මේක අපි Service එකෙන් ඉබේම පුරවනවා
 }

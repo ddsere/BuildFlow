@@ -1,7 +1,6 @@
 package lk.ijse.buildflow.dto;
 
 import lombok.Data;
-
 import java.time.LocalDate;
 
 @Data
@@ -12,4 +11,5 @@ public class ConstructionProjectDTO {
     private LocalDate startDate;
     private String currentStatus;
     private Double finalCost;
+    private Integer currentProgress;
 }

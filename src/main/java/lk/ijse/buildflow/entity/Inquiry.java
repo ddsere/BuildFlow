@@ -27,4 +27,6 @@ public class Inquiry {
     protected void onCreate() {
         submittedAt = LocalDateTime.now();
     }
+
+    private String status = "PENDING";
 }

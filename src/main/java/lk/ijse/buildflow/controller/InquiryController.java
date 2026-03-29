@@ -1,13 +1,11 @@
 package lk.ijse.buildflow.controller;
 
 import lk.ijse.buildflow.dto.InquiryDTO;
-import lk.ijse.buildflow.entity.Inquiry;
-import lk.ijse.buildflow.repository.InquiryRepository;
+import lk.ijse.buildflow.service.InquiryService;
 import lk.ijse.buildflow.util.APIResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,40 +14,51 @@ import java.util.List;
 @RequestMapping("/api/v1/inquiries")
 @CrossOrigin
 public class InquiryController {
-    @Autowired
-    private JavaMailSender mailSender;
 
     @Autowired
-    private InquiryRepository inquiryRepository;
+    private InquiryService inquiryService;
 
     @PostMapping("/send")
     public ResponseEntity<APIResponse<String>> receiveInquiry(@RequestBody InquiryDTO inquiryDTO) {
-
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("dahamserasinghe542@gmail.com");
-            message.setTo("dahamserasinghe542@gmail.com");
-            message.setSubject("New BuildFlow Inquiry: " + inquiryDTO.getModelName());
+            // Service එකට වැඩේ බාර දෙනවා
+            inquiryService.saveInquiry(inquiryDTO);
 
-            String emailContent = "You have received a new inquiry from " + inquiryDTO.getCustomerName() + "\n\n" +
-                    "Model: " + inquiryDTO.getModelName() + "\n" +
-                    "Phone: " + inquiryDTO.getCustomerPhone() + "\n" +
-                    "Email: " + inquiryDTO.getCustomerEmail() + "\n\n" +
-                    "Message: " + inquiryDTO.getMessage();
-
-            message.setText(emailContent);
-            mailSender.send(message);
-
-            return ResponseEntity.ok(new APIResponse<>(200, "Email sent successfully!", "Success"));
+            return ResponseEntity.ok(new APIResponse<>(200, "Inquiry saved and Email sent successfully!", "Success"));
 
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(new APIResponse<>(500, "Error sending email: " + e.getMessage(), null));
+            e.printStackTrace(); // Console එකේ Error එක බලාගන්න
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new APIResponse<>(500, "Failed to process inquiry: " + e.getMessage(), null));
         }
     }
 
     @GetMapping("/all")
-    public ResponseEntity<APIResponse<List<Inquiry>>> getAllInquiries() {
-        List<Inquiry> inquiries = inquiryRepository.findAllByOrderBySubmittedAtDesc();
-        return ResponseEntity.ok(new APIResponse<>(200, "Inquiries retrieved", inquiries));
+    public ResponseEntity<APIResponse<List<InquiryDTO>>> getAllInquiries() {
+        try {
+            List<InquiryDTO> inquiries = inquiryService.getAllInquiries();
+            return ResponseEntity.ok(new APIResponse<>(200, "Inquiries retrieved successfully", inquiries));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new APIResponse<>(500, "Error fetching inquiries: " + e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/reply")
+    public ResponseEntity<APIResponse<String>> replyToInquiry(@RequestBody java.util.Map<String, String> payload) {
+        try {
+            // Map එකෙන් අදාළ දත්ත ටික අරගෙන Service එකට යවනවා
+            String email = payload.get("customerEmail");
+            String subject = payload.get("subject");
+            String message = payload.get("message");
+
+            inquiryService.sendReplyEmail(email, subject, message);
+
+            return ResponseEntity.ok(new APIResponse<>(200, "Reply sent successfully!", "Success"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new APIResponse<>(500, "Failed to send reply: " + e.getMessage(), null));
+        }
     }
 }

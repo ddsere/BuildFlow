@@ -1,36 +1,50 @@
 package lk.ijse.buildflow.controller;
 
+import lk.ijse.buildflow.dto.CustomOrderRequestDTO;
 import lk.ijse.buildflow.dto.OrderDTO;
-import lk.ijse.buildflow.entity.HouseOrder;
-import lk.ijse.buildflow.repository.OrderRepository;
+import lk.ijse.buildflow.service.OrderService;
 import lk.ijse.buildflow.util.APIResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/orders")
-@CrossOrigin
+@CrossOrigin(origins = "*", allowedHeaders = "*") // Frontend එකට අවසර දීම
 public class OrderController {
-    @Autowired
-    private OrderRepository orderRepository;
 
+    @Autowired
+    private OrderService orderService; // Service එක පමණක් Inject කරන්න
+
+    // 1. Standard Marketplace Purchase (Advance Payment)
     @PostMapping("/purchase")
     public ResponseEntity<APIResponse<String>> purchasePlan(@RequestBody OrderDTO orderDTO) {
         try {
-            HouseOrder order = new HouseOrder();
-            order.setModelName(orderDTO.getModelName());
-            order.setCustomerName(orderDTO.getCustomerName());
-            order.setCustomerEmail(orderDTO.getCustomerEmail());
-            order.setAmountPaid(orderDTO.getAmountPaid());
-            order.setPaymentStatus("COMPLETED");
+            // Logic ඔක්කොම Service එකෙන් කරලා Result එක දෙනවා
+            String result = orderService.processStandardPurchase(orderDTO);
 
-            orderRepository.save(order);
+            return ResponseEntity.ok(new APIResponse<>(200, result, "Success"));
 
-
-            return ResponseEntity.ok(new APIResponse<>(200, "Purchase Successful!", "Success"));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(new APIResponse<>(500, "Payment Failed: " + e.getMessage(), null));
+            e.printStackTrace(); // Console එකේ Error එක බලාගන්න
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new APIResponse<>(500, "Payment Failed: " + e.getMessage(), null));
+        }
+    }
+
+    // 2. Admin Custom Order Creation (Inquiry Approval)
+    @PostMapping("/create-custom")
+    public ResponseEntity<APIResponse<String>> createCustomOrder(@RequestBody CustomOrderRequestDTO requestDTO) {
+        try {
+            String result = orderService.createCustomOrder(requestDTO);
+
+            return ResponseEntity.ok(new APIResponse<>(200, result, "Success"));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new APIResponse<>(500, "Failed to create custom order: " + e.getMessage(), null));
         }
     }
 }

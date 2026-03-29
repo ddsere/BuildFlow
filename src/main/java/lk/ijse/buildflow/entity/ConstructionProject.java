@@ -25,4 +25,7 @@ public class ConstructionProject {
     private LocalDate estimatedEndDate;
     private Double finalAgreedCost;
     private String currentStatus;
+
+    @Column(columnDefinition = "integer default 0")
+    private Integer currentProgress;
 }
