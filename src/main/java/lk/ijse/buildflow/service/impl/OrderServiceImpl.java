@@ -2,10 +2,14 @@ package lk.ijse.buildflow.service.impl;
 
 import lk.ijse.buildflow.dto.CustomOrderRequestDTO;
 import lk.ijse.buildflow.dto.OrderDTO;
+import lk.ijse.buildflow.entity.ConstructionProject;
 import lk.ijse.buildflow.entity.HouseOrder;
 import lk.ijse.buildflow.entity.Inquiry;
+import lk.ijse.buildflow.entity.Payment;
+import lk.ijse.buildflow.repository.ConstructionProjectRepository;
 import lk.ijse.buildflow.repository.InquiryRepository;
 import lk.ijse.buildflow.repository.OrderRepository;
+import lk.ijse.buildflow.repository.PaymentRepository;
 import lk.ijse.buildflow.service.OrderService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +17,9 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -29,6 +36,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
+    private ConstructionProjectRepository projectRepository;
 
     // --- 1. Custom Order Logic (කලින් අපි හැදූ කොටස) ---
     @Override
@@ -54,20 +67,35 @@ public class OrderServiceImpl implements OrderService {
 
     // --- 2. Standard Purchase Logic (ඔයා අලුතින් අහපු කොටස) ---
     @Override
+    @Transactional
     public String processStandardPurchase(OrderDTO orderDTO) {
-        // 1. DTO එක Entity එකට හැරවීම (ModelMapper මගින්)
+
+        // 1. Order එක ModelMapper හරහා Entity එකට හරවා Save කිරීම
         HouseOrder order = modelMapper.map(orderDTO, HouseOrder.class);
-
-        // 2. අදාළ Payment Status එක Set කිරීම
         order.setPaymentStatus("COMPLETED");
+        HouseOrder savedOrder = orderRepository.save(order);
 
-        // 3. Database එකේ Save කිරීම
-        orderRepository.save(order);
+        // 2. Payment එක අතින් (Manual) හදා Save කිරීම (මෙහි Relationship සහ අහඹු ID ඇති බැවින් ModelMapper අනවශ්‍යයි)
+        Payment payment = new Payment();
+        payment.setOrder(savedOrder);
+        payment.setAmount(orderDTO.getAmountPaid()); // ඔයාගේ DTO එකේ නම
+        payment.setTransactionId("TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        payment.setPaymentStatus("COMPLETED");
+        paymentRepository.save(payment);
 
-        // 4. (Optional) Customer ට Payment Receipt Email එකක් යැවීම
-        sendPaymentReceiptEmail(order);
+        // 💡 3. Construction Project එක ModelMapper හරහා මැප් කර Save කිරීම
+        // මෙහිදී DTO එකේ ඇති customerName සහ modelName ඉබේම Project Entity එකට Set වේ.
+        ConstructionProject project = modelMapper.map(orderDTO, ConstructionProject.class);
+        project.setStartDate(LocalDate.now()); // අද දිනය
+        project.setCurrentStatus("STARTED");   // මුලික තත්වය
+        project.setCurrentProgress(0);         // ආරම්භයේදී ප්‍රගතිය 0%
 
-        return "Purchase Successful!";
+        projectRepository.save(project); // Project Table එකට Data යැවීම
+
+        // 4. Customer ට Payment Receipt Email එකක් යැවීම (ඔයාගේ කලින් තිබ්බ Method එක)
+        sendPaymentReceiptEmail(savedOrder);
+
+        return "Purchase, Payment & Project Created Successfully!";
     }
 
     // --- Emails යවන ක්‍රියාවලීන් ---

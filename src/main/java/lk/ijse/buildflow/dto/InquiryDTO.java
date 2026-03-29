@@ -10,4 +10,5 @@ public class InquiryDTO {
     private String customerEmail;
     private String customerPhone;
     private String message;
+    private String status;
 }

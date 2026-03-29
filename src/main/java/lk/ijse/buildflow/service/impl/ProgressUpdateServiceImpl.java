@@ -30,26 +30,25 @@ public class ProgressUpdateServiceImpl implements ProgressUpdateService {
 
     @Override
     public ProgressUpdateDTO addUpdate(ProgressUpdateDTO updateDTO) {
-        // 1. අදාළ Project එක තිබේදැයි පරීක්ෂා කිරීම
         ConstructionProject project = projectRepository.findById(updateDTO.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + updateDTO.getProjectId()));
+                .orElseThrow(() -> new RuntimeException("Project not found!"));
 
-        // 2. DTO -> Entity හරවා සම්බන්ධතාවය (Relationship) සෑදීම
-        ProgressUpdate update = modelMapper.map(updateDTO, ProgressUpdate.class);
+        // 2. ModelMapper නොමැතිව Manual Mapping කිරීම (Error එක සම්පූර්ණයෙන්ම නැතිවේ)
+        ProgressUpdate update = new ProgressUpdate();
         update.setProject(project);
-        update.setUpdateTime(LocalDateTime.now()); // Update වන වේලාව ස්වයංක්‍රීයව සටහන් කිරීම
+        update.setDescription(updateDTO.getDescription());
+        update.setPercentageComplete(updateDTO.getPercentageComplete());
+        update.setPhotoUrl(updateDTO.getPhotoUrl());
+        update.setUpdateTime(LocalDateTime.now());
 
-        // 3. Database එකෙහි Save කිරීම
-        ProgressUpdate savedUpdate = updateRepository.save(update);
+        // 3. අලුත් Update එක Save කරනවා
+        ProgressUpdate saved = updateRepository.save(update);
 
-        /* 💡 මතක තබාගන්න:
-           ඔයාගේ ConstructionProject entity එකේ currentProgress වගේ field එකක් තියෙනවා නම්,
-           මෙතනදී ඒකත් අලුත් ප්‍රතිශතයෙන් (Percentage) Update කරලා Save කරන්න.
-           project.setCurrentProgress(updateDTO.getPercentageComplete());
-           projectRepository.save(project);
-        */
+        // 4. අදාළ Project එකේ මුළු ප්‍රතිශතයත් (Progress) මේත් එක්කම Update කරනවා
+        project.setCurrentProgress(updateDTO.getPercentageComplete());
+        projectRepository.save(project);
 
-        return modelMapper.map(savedUpdate, ProgressUpdateDTO.class);
+        return modelMapper.map(saved, ProgressUpdateDTO.class);
     }
 
     @Override

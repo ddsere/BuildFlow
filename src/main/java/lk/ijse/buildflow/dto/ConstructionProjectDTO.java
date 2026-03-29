@@ -7,6 +7,7 @@ import java.time.LocalDate;
 public class ConstructionProjectDTO {
     private Long projectId;
     private String modelName;
+    private String customerName;
     private String contractorName;
     private LocalDate startDate;
     private String currentStatus;

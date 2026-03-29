@@ -21,6 +21,9 @@ public class ConstructionProject {
     @JoinColumn(name = "contractor_id")
     private User contractor;
 
+    private String customerName;
+    private String modelName;
+
     private LocalDate startDate;
     private LocalDate estimatedEndDate;
     private Double finalAgreedCost;
