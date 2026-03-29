@@ -17,21 +17,21 @@ public class HouseOrder {
     private String customerName;
     private String customerEmail;
 
-    private Double amountPaid; // ගෙවූ මුදල (Advance)
-    private Double totalPrice; // සම්පූර්ණ එකඟ වූ මුදල (අලුතින් එකතු කළා)
+    private Double amountPaid;
+    private Double totalPrice;
 
     private String paymentStatus;
 
     private LocalDateTime orderDate;
 
-    private Long inquiryId; // අදාළ Inquiry එකේ ID එක
-    private String customSpecs; // ඇඩ්මින් අතින් දාන විස්තර (උදා: extra bathroom)
+    private Long inquiryId;
+    private String customSpecs;
 
     @PrePersist
     protected void onCreate() {
         orderDate = LocalDateTime.now();
         if (amountPaid == null) {
-            amountPaid = 0.0; // Order එක හැදෙද්දී ගෙවපු ගාණ 0යි
+            amountPaid = 0.0;
         }
     }
 }

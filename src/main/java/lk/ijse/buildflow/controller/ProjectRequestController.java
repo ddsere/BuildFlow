@@ -2,8 +2,6 @@ package lk.ijse.buildflow.controller;
 
 import lk.ijse.buildflow.dto.HouseModelDTO;
 import lk.ijse.buildflow.dto.ProjectRequestDTO;
-import lk.ijse.buildflow.entity.HouseModel;
-import lk.ijse.buildflow.entity.User;
 import lk.ijse.buildflow.repository.HouseModelRepository;
 import lk.ijse.buildflow.repository.UserRepository;
 import lk.ijse.buildflow.service.HouseModelService;
@@ -62,16 +60,14 @@ public class ProjectRequestController {
     @GetMapping("/download-quotation/{modelId}")
     public ResponseEntity<byte[]> downloadQuotation(@PathVariable Long modelId) {
         try {
-            // දැන් මේ method එක වැඩ කරනවා
             HouseModelDTO model = modelService.getHouseModelById(modelId);
 
-            // Real Data ටික PDF එකට යවනවා
             byte[] pdfContent = quotationService.getQuotationPdfBytes(
                     "Valued Customer",
                     model.getModelName(),
                     model.getEstimatedCost(),
-                    model.getNumBedrooms(), // අලුතින් එකතු කළා
-                    model.getFloorArea()    // අලුතින් එකතු කළා
+                    model.getNumBedrooms(),
+                    model.getFloorArea()
             );
 
             HttpHeaders headers = new HttpHeaders();

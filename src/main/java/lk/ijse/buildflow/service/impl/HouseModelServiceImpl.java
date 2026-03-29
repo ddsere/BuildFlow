@@ -45,11 +45,9 @@ public class HouseModelServiceImpl implements HouseModelService {
 
     @Override
     public HouseModelDTO getHouseModelById(Long modelId) {
-        // Database එකෙන් Entity එක හොයනවා
         HouseModel houseModel = modelRepository.findById(modelId)
                 .orElseThrow(() -> new RuntimeException("House Model not found with ID: " + modelId));
 
-        // Entity එක DTO එකකට හරවනවා (Manual mapping)
         HouseModelDTO dto = new HouseModelDTO();
         dto.setModelId(houseModel.getModelId());
         dto.setModelName(houseModel.getModelName());
@@ -57,6 +55,8 @@ public class HouseModelServiceImpl implements HouseModelService {
         dto.setEstimatedCost(houseModel.getEstimatedCost());
         dto.setFloorArea(houseModel.getFloorArea());
         dto.setNumBedrooms(houseModel.getNumBedrooms());
+        dto.setModelUrl(houseModel.getModelUrl());
+        dto.setImgUrl(houseModel.getImgUrl());
 
         return dto;
     }

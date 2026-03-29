@@ -22,7 +22,7 @@ public class ProgressUpdateController {
     public ResponseEntity<APIResponse<ProgressUpdateDTO>> addUpdate(@RequestBody ProgressUpdateDTO updateDTO) {
         try {
             ProgressUpdateDTO savedUpdate = updateService.addUpdate(updateDTO);
-            return ResponseEntity.status(HttpStatus.CREATED) // 201 අලුතින් දෙයක් හැදුන බව පෙන්වයි
+            return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new APIResponse<>(201, "Progress updated successfully!", savedUpdate));
         } catch (Exception e) {
             e.printStackTrace();

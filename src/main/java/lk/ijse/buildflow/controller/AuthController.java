@@ -3,6 +3,9 @@ package lk.ijse.buildflow.controller;
 import lk.ijse.buildflow.dto.AuthRequestDTO;
 import lk.ijse.buildflow.dto.AuthResponseDTO;
 import lk.ijse.buildflow.dto.UserDTO;
+import lk.ijse.buildflow.entity.User;
+import lk.ijse.buildflow.enums.Role;
+import lk.ijse.buildflow.repository.UserRepository;
 import lk.ijse.buildflow.security.JwtUtil;
 import lk.ijse.buildflow.service.UserService;
 import lk.ijse.buildflow.util.APIResponse;
@@ -14,42 +17,41 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@CrossOrigin // Frontend එකට connect වෙන්න මේක ඕනේ
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    @Autowired private AuthenticationManager authenticationManager;
+    @Autowired private JwtUtil jwtUtil;
+    @Autowired private UserService userService;
+    @Autowired private UserRepository userRepository;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserService userService;
-
-    // 1. Register Endpoint (අලුත් User කෙනෙක්ව ඇතුළත් කිරීම)
     @PostMapping("/register")
     public ResponseEntity<APIResponse<UserDTO>> register(@RequestBody UserDTO userDTO) {
         try {
+            if (userDTO.getRole() == null || userDTO.getRole().isEmpty()) {
+                userDTO.setRole(Role.CLIENT.name());
+            }
             UserDTO savedUser = userService.registerUser(userDTO);
             return ResponseEntity.ok(new APIResponse<>(200, "User registered successfully", savedUser));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(new APIResponse<>(500, e.getMessage(), null));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(new APIResponse<>(500, "Registration failed: " + e.getMessage(), null));
         }
     }
 
-    // 2. Login Endpoint (Token එක ලබා ගැනීම)
+
     @PostMapping("/login")
     public ResponseEntity<APIResponse<AuthResponseDTO>> login(@RequestBody AuthRequestDTO authRequest) {
         try {
-            // Spring Security හරහා Email සහ Password හරිද බලනවා
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
             );
 
-            // දත්ත හරි නම් Token එක හදනවා
-            String token = jwtUtil.generateToken(authRequest.getEmail());
+            User user = userRepository.findByEmail(authRequest.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-            AuthResponseDTO response = new AuthResponseDTO(authRequest.getEmail(), token);
+            String roleStr = user.getRole() != null ? user.getRole().name() : "CLIENT";
+
+            AuthResponseDTO response = new AuthResponseDTO(authRequest.getEmail(), "LOGGED_IN", roleStr);
             return ResponseEntity.ok(new APIResponse<>(200, "Login successful", response));
 
         } catch (Exception e) {

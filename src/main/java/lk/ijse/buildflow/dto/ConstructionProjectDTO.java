@@ -7,9 +7,11 @@ import java.time.LocalDate;
 public class ConstructionProjectDTO {
     private Long projectId;
     private String modelName;
+    private String customerName;
+    private String customerEmail;
     private String contractorName;
     private LocalDate startDate;
     private String currentStatus;
-    private Double finalCost;
+    private Double finalAgreedCost;
     private Integer currentProgress;
 }

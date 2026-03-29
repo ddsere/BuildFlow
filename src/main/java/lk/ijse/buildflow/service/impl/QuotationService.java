@@ -35,7 +35,6 @@ public class QuotationService {
     }
 
     public byte[] getQuotationPdfBytes(String customerName, String modelName, Double price, Integer bedrooms, Double area) {
-        // මේකෙන් කෙලින්ම PDF byte array එක Return කරනවා
         try {
             return documentGenerator.generateQuotationPdf(customerName, modelName, price, bedrooms, area);
         } catch (IOException e) {

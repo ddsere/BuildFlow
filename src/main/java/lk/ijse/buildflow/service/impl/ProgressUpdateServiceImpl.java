@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional // Database එකට දත්ත ලියන නිසා මෙය අනිවාර්ය වේ
+@Transactional
 public class ProgressUpdateServiceImpl implements ProgressUpdateService {
 
     @Autowired
@@ -30,32 +30,25 @@ public class ProgressUpdateServiceImpl implements ProgressUpdateService {
 
     @Override
     public ProgressUpdateDTO addUpdate(ProgressUpdateDTO updateDTO) {
-        // 1. අදාළ Project එක තිබේදැයි පරීක්ෂා කිරීම
         ConstructionProject project = projectRepository.findById(updateDTO.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + updateDTO.getProjectId()));
+                .orElseThrow(() -> new RuntimeException("Project not found!"));
 
-        // 2. DTO -> Entity හරවා සම්බන්ධතාවය (Relationship) සෑදීම
-        ProgressUpdate update = modelMapper.map(updateDTO, ProgressUpdate.class);
+        ProgressUpdate update = new ProgressUpdate();
         update.setProject(project);
-        update.setUpdateTime(LocalDateTime.now()); // Update වන වේලාව ස්වයංක්‍රීයව සටහන් කිරීම
+        update.setDescription(updateDTO.getDescription());
+        update.setPercentageComplete(updateDTO.getPercentageComplete());
+        update.setPhotoUrl(updateDTO.getPhotoUrl());
+        update.setUpdateTime(LocalDateTime.now());
+        ProgressUpdate saved = updateRepository.save(update);
+        project.setCurrentProgress(updateDTO.getPercentageComplete());
+        projectRepository.save(project);
 
-        // 3. Database එකෙහි Save කිරීම
-        ProgressUpdate savedUpdate = updateRepository.save(update);
-
-        /* 💡 මතක තබාගන්න:
-           ඔයාගේ ConstructionProject entity එකේ currentProgress වගේ field එකක් තියෙනවා නම්,
-           මෙතනදී ඒකත් අලුත් ප්‍රතිශතයෙන් (Percentage) Update කරලා Save කරන්න.
-           project.setCurrentProgress(updateDTO.getPercentageComplete());
-           projectRepository.save(project);
-        */
-
-        return modelMapper.map(savedUpdate, ProgressUpdateDTO.class);
+        return modelMapper.map(saved, ProgressUpdateDTO.class);
     }
 
     @Override
-    @Transactional(readOnly = true) // මෙය දත්ත කියවීමට පමණක් ඇති බැවින් readOnly යොදයි
+    @Transactional(readOnly = true)
     public List<ProgressUpdateDTO> getUpdatesByProjectId(Long projectId) {
-        // Project එක ඇත්තටම තියෙනවද බලන එක වඩාත් ආරක්ෂිතයි
         ConstructionProject project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + projectId));
 

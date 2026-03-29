@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional // පන්තියේ ඇති සියලුම Database ගනුදෙනු ආරක්ෂිතව සිදු කිරීමට
+@Transactional
 public class ConstructionProjectServiceImpl implements ConstructionProjectService {
 
     @Autowired
@@ -24,36 +24,23 @@ public class ConstructionProjectServiceImpl implements ConstructionProjectServic
     @Autowired
     private ModelMapper modelMapper;
 
-    /**
-     * අලුත් Project එකක් ආරම්භ කිරීම
-     */
     @Override
     public ConstructionProjectDTO startProject(ProjectRequestDTO requestDTO) {
-        // 1. Request එකෙන් එන දත්ත Project Entity එකට Map කරගැනීම
         ConstructionProject project = modelMapper.map(requestDTO, ConstructionProject.class);
 
-        // 2. අලුත් Project එකක් පටන් ගනිද්දී තිබිය යුතු මූලික තත්වයන් Set කිරීම
-        project.setStartDate(LocalDate.now()); // ආරම්භ කළ දිනය අද ලෙස සටහන් කිරීම
-        project.setCurrentStatus("STARTED");   // මූලික තත්වය (Status)
-        project.setCurrentProgress(0);         // ආරම්භයේදී ප්‍රගතිය (Progress) 0% කි
+        project.setStartDate(LocalDate.now());
+        project.setCurrentStatus("STARTED");
+        project.setCurrentProgress(0);
 
-        // 3. Database එකෙහි Save කිරීම
         ConstructionProject savedProject = projectRepository.save(project);
 
-        // 4. Save වූ දත්ත නැවත DTO එකකට හරවා Controller එකට යැවීම
         return modelMapper.map(savedProject, ConstructionProjectDTO.class);
     }
 
-    /**
-     * දැනට ක්‍රියාත්මක වන සියලුම Projects ලබා ගැනීම
-     */
     @Override
-    @Transactional(readOnly = true) // දත්ත කියවීමට පමණක් ඇති බැවින් Performance වැඩි කිරීමට මෙය යොදයි
+    @Transactional(readOnly = true)
     public List<ConstructionProjectDTO> getAllOngoingProjects() {
-        // 1. Database එකෙන් සියලුම Projects ලබා ගැනීම
         List<ConstructionProject> projects = projectRepository.findAll();
-
-        // 2. Entity List එක DTO List එකක් බවට හරවා යැවීම (Java Streams භාවිතයෙන්)
         return projects.stream()
                 .map(project -> modelMapper.map(project, ConstructionProjectDTO.class))
                 .collect(Collectors.toList());

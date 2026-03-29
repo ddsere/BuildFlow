@@ -29,20 +29,13 @@ public class InquiryServiceImpl implements InquiryService {
 
     @Override
     public void saveInquiry(InquiryDTO inquiryDTO) {
-        // 1. DTO එක Entity එකකට හැරවීම (ModelMapper මගින්)
         Inquiry inquiry = modelMapper.map(inquiryDTO, Inquiry.class);
-
-        // 2. Database එකේ Save කිරීම
         inquiryRepository.save(inquiry);
-
-        // 3. Customer ට පමණක් Email එක යැවීම
         sendConfirmationEmailToCustomer(inquiryDTO.getCustomerEmail(), inquiryDTO.getCustomerName(), inquiryDTO.getModelName());
     }
 
     @Override
     public List<InquiryDTO> getAllInquiries() {
-        // Database එකෙන් සියලුම Inquiries ගෙන ඒවා DTO වලට හරවා List එකක් ලෙස යැවීම
-        // (ඔයාගේ repository එකේ findAllByOrderBySubmittedAtDesc() තිබුණා නම් ඒක මෙතනට දාන්නත් පුළුවන්)
         List<Inquiry> inquiries = inquiryRepository.findAll();
 
         return inquiries.stream()
@@ -57,10 +50,9 @@ public class InquiryServiceImpl implements InquiryService {
         message.setSubject(subject);
         message.setText(messageText);
 
-        mailSender.send(message); // Email එක යැවීම
+        mailSender.send(message);
     }
 
-    // Email යැවීමේ සරල ක්‍රියාවලිය වෙන් කරලා ලිවීම (Clean Code)
     private void sendConfirmationEmailToCustomer(String toEmail, String customerName, String modelName) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);

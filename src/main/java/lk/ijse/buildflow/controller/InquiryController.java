@@ -21,13 +21,12 @@ public class InquiryController {
     @PostMapping("/send")
     public ResponseEntity<APIResponse<String>> receiveInquiry(@RequestBody InquiryDTO inquiryDTO) {
         try {
-            // Service එකට වැඩේ බාර දෙනවා
             inquiryService.saveInquiry(inquiryDTO);
 
             return ResponseEntity.ok(new APIResponse<>(200, "Inquiry saved and Email sent successfully!", "Success"));
 
         } catch (Exception e) {
-            e.printStackTrace(); // Console එකේ Error එක බලාගන්න
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new APIResponse<>(500, "Failed to process inquiry: " + e.getMessage(), null));
         }
@@ -48,7 +47,6 @@ public class InquiryController {
     @PostMapping("/reply")
     public ResponseEntity<APIResponse<String>> replyToInquiry(@RequestBody java.util.Map<String, String> payload) {
         try {
-            // Map එකෙන් අදාළ දත්ත ටික අරගෙන Service එකට යවනවා
             String email = payload.get("customerEmail");
             String subject = payload.get("subject");
             String message = payload.get("message");

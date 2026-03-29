@@ -2,8 +2,10 @@ package lk.ijse.buildflow.service.impl;
 
 import lk.ijse.buildflow.dto.CustomOrderRequestDTO;
 import lk.ijse.buildflow.dto.OrderDTO;
+import lk.ijse.buildflow.entity.ConstructionProject;
 import lk.ijse.buildflow.entity.HouseOrder;
 import lk.ijse.buildflow.entity.Inquiry;
+import lk.ijse.buildflow.repository.ConstructionProjectRepository;
 import lk.ijse.buildflow.repository.InquiryRepository;
 import lk.ijse.buildflow.repository.OrderRepository;
 import lk.ijse.buildflow.service.OrderService;
@@ -14,86 +16,94 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Transactional
 public class OrderServiceImpl implements OrderService {
 
-    @Autowired
-    private InquiryRepository inquiryRepository;
+    @Autowired private InquiryRepository inquiryRepository;
+    @Autowired private OrderRepository orderRepository;
+    @Autowired private ModelMapper modelMapper;
+    @Autowired private JavaMailSender mailSender;
+    @Autowired private ConstructionProjectRepository projectRepository;
 
-    @Autowired
-    private OrderRepository orderRepository;
+    @Override
+    public String processStandardPurchase(OrderDTO orderDTO) {
+        HouseOrder order = new HouseOrder();
+        order.setModelName(orderDTO.getModelName());
+        order.setCustomerName(orderDTO.getCustomerName());
+        order.setCustomerEmail(orderDTO.getCustomerEmail());
+        order.setAmountPaid(0.0);
+        order.setTotalPrice(0.0);
+        order.setPaymentStatus("PENDING");
+        orderRepository.save(order);
+        sendNewOrderNotification(order);
 
-    @Autowired
-    private ModelMapper modelMapper;
+        return "Order request submitted. Our team will contact you shortly.";
+    }
 
-    @Autowired
-    private JavaMailSender mailSender;
-
-    // --- 1. Custom Order Logic (කලින් අපි හැදූ කොටස) ---
     @Override
     public String createCustomOrder(CustomOrderRequestDTO requestDTO) {
         Inquiry inquiry = inquiryRepository.findById(requestDTO.getInquiryId())
-                .orElseThrow(() -> new RuntimeException("Inquiry not found with ID: " + requestDTO.getInquiryId()));
+                .orElseThrow(() -> new RuntimeException("Inquiry not found"));
 
         inquiry.setStatus("APPROVED");
         inquiryRepository.save(inquiry);
 
         HouseOrder order = modelMapper.map(inquiry, HouseOrder.class);
         order.setInquiryId(inquiry.getId());
-        order.setCustomSpecs(requestDTO.getCustomSpecs());
         order.setTotalPrice(requestDTO.getFinalPrice());
-        order.setAmountPaid(0.0);
         order.setPaymentStatus("UNPAID");
-
-        orderRepository.save(order);
-        sendApprovalEmail(inquiry, requestDTO.getFinalPrice(), requestDTO.getCustomSpecs());
-
-        return "Custom Order Created Successfully!";
-    }
-
-    // --- 2. Standard Purchase Logic (ඔයා අලුතින් අහපු කොටස) ---
-    @Override
-    public String processStandardPurchase(OrderDTO orderDTO) {
-        // 1. DTO එක Entity එකට හැරවීම (ModelMapper මගින්)
-        HouseOrder order = modelMapper.map(orderDTO, HouseOrder.class);
-
-        // 2. අදාළ Payment Status එක Set කිරීම
-        order.setPaymentStatus("COMPLETED");
-
-        // 3. Database එකේ Save කිරීම
         orderRepository.save(order);
 
-        // 4. (Optional) Customer ට Payment Receipt Email එකක් යැවීම
-        sendPaymentReceiptEmail(order);
+        ConstructionProject project = new ConstructionProject();
+        project.setCustomerName(inquiry.getCustomerName());
+        project.setCustomerEmail(inquiry.getCustomerEmail());
+        project.setModelName(inquiry.getModelName());
+        project.setFinalAgreedCost(requestDTO.getFinalPrice());
+        project.setCurrentStatus("STARTED");
+        project.setCurrentProgress(0);
+        project.setStartDate(java.time.LocalDate.now());
 
-        return "Purchase Successful!";
+        projectRepository.save(project);
+
+        return "Project Started Successfully!";
     }
 
-    // --- Emails යවන ක්‍රියාවලීන් ---
+    private void sendNewOrderNotification(HouseOrder order) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo("admin@buildflow.lk");
+            message.setSubject("BuildFlow - New Order Request: " + order.getModelName());
+            message.setText("A new order request has been received.\n\n" +
+                    "Customer: " + order.getCustomerName() + "\n" +
+                    "Email: " + order.getCustomerEmail() + "\n" +
+                    "Model: " + order.getModelName() + "\n\n" +
+                    "Please log in to the admin dashboard to review and contact the client.");
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("Admin notification email failed: " + e.getMessage());
+        }
+    }
 
     private void sendApprovalEmail(Inquiry inquiry, Double price, String specs) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(inquiry.getCustomerEmail());
         message.setSubject("BuildFlow - Custom Request Approved! (" + inquiry.getModelName() + ")");
         message.setText("Hi " + inquiry.getCustomerName() + ",\n\n" +
-                "Great news! Your custom request for the " + inquiry.getModelName() + " has been reviewed and approved by our team.\n\n" +
+                "Your custom request for the " + inquiry.getModelName() + " has been approved.\n\n" +
                 "Approved Specifications: " + specs + "\n" +
-                "Final Estimated Cost: Rs. " + price + "\n\n" +
-                "Please log in to your BuildFlow dashboard to complete the advance payment and begin the project.\n\n" +
+                "Final Agreed Cost: Rs. " + price + "\n\n" +
+                "Please log in to your BuildFlow dashboard to make your first payment.\n\n" +
                 "Best Regards,\nBuildFlow Team");
         mailSender.send(message);
     }
-
-    private void sendPaymentReceiptEmail(HouseOrder order) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(order.getCustomerEmail());
-        message.setSubject("BuildFlow - Payment Receipt (" + order.getModelName() + ")");
-        message.setText("Hi " + order.getCustomerName() + ",\n\n" +
-                "Thank you for your payment! We have successfully received your advance payment of Rs. " + order.getAmountPaid() +
-                " for the " + order.getModelName() + " blueprint plan.\n\n" +
-                "Our team will review your order and get back to you shortly with the next steps for your construction project.\n\n" +
-                "Best Regards,\nBuildFlow Team");
-        mailSender.send(message);
+    @Override
+    public List<OrderDTO> getAllOrders() {
+        return orderRepository.findAll().stream()
+                .map(order -> modelMapper.map(order, OrderDTO.class))
+                .collect(Collectors.toList());
     }
 }

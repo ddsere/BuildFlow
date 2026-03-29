@@ -9,5 +9,5 @@ public class ProgressUpdateDTO {
     private Integer percentageComplete;
     private String description;
     private String photoUrl;
-    private LocalDateTime updateTime; // මේක අපි Service එකෙන් ඉබේම පුරවනවා
+    private LocalDateTime updateTime;
 }
